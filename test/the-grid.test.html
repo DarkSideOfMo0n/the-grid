@@ -19,18 +19,12 @@
     </template>
 </test-fixture>
 
-<test-fixture id="placeholder-grid">
-    <template>
-        <the-grid>
-            <div placeholder></div>
-        </the-grid>
-    </template>
-</test-fixture>
-
 <test-fixture id="tile-position">
     <template>
         <the-grid cell-width="33" cell-height="42" cell-margin="1">
-            <div id="zero" col="0" row="0" height="0" width="0"></div>
+            <div id="zero" col="0" row="0" height="0" width="0">
+                <span resize="left">│</span>
+            </div>
             <div id="one" col="1" row="1" height="0" width="0"></div>
             <div id="two" col="2" row="2" height="0" width="0"></div>
         </the-grid>
@@ -41,8 +35,11 @@
     <template>
         <the-grid cell-width="33" cell-height="42" cell-margin="1">
             <div id="zero" col="0" row="0" height="0" width="0"></div>
-            <div id="one" col="0" row="0" height="1" width="1"></div>
+            <div id="one" col="0" row="0" height="1" width="1">
+                <span resize="right">│</span>
+            </div>
             <div id="two" col="0" row="0" height="2" width="2"></div>
+            <div placeholder></div>
         </the-grid>
     </template>
 </test-fixture>
@@ -57,7 +54,7 @@
 
 <test-fixture id="tile-upper-size">
     <template>
-        <the-grid col-count="5" row-count="5">
+        <the-grid col-count="5" row-count="5" animated draggable>
             <div id="upper" col="0" row="0" height="99" width="99"></div>
         </the-grid>
     </template>
@@ -69,13 +66,140 @@
     suite(`<the-grid> #${mode}`, function() {
         test('can instantiate', function() {
             let grid = fixture('default-grid');
-            assert.equal(grid.constructor.is, 'the-grid');
+            assert.equal(grid.tagName, 'THE-GRID');
         });
-
-        test('can find the placeholder', function() {
-            let grid = fixture('placeholder-grid');
-            assert.isTrue(grid.placeholder.hasAttribute('placeholder'));
-            //console.log(window.location.search);
+        
+        test('serializse', function() {
+            let grid = fixture('tile-size');
+            let dashboard = grid.serialize();
+            assert.isArray(dashboard);
+            assert.equal(dashboard.length, 4);
+        });
+        
+        test('getResizerHost', function() {
+            let grid = fixture('tile-position');
+            let resizer = grid.querySelector('[resize]');
+            assert.equal(grid.getResizerHost(resizer).getAttribute('id'), "zero");
+            assert.isUndefined(grid.getResizerHost(grid.children[0]));
+        });
+        
+        test('getClosestSize', function() {
+            let grid = fixture('tile-size');
+            let size = grid.getClosestSize(7, 8, 12, 64);
+            assert.equal(size.width, 1);
+            assert.equal(size.height, 1);
+            
+            grid.colAutogrow = true;
+            grid.rowAutogrow = true;
+            size = grid.getClosestSize(Infinity, Infinity);
+            assert.equal(size.width, Infinity);
+            assert.equal(size.height, Infinity);
+        });
+        
+        test('getClosestPosition', function() {
+            let grid = fixture('tile-size');
+            let size = grid.getClosestPosition(700, 800);
+            assert.equal(size.col, 9);
+            assert.equal(size.row, 9);
+            
+            size = grid.getClosestPosition(700, 800, 2, 2, true);
+            assert.equal(size.col, 8);
+            assert.equal(size.row, 8);
+            
+            size = grid.getClosestPosition(67.5, 85.5, 2, 2, true);
+            assert.equal(size.col, 2);
+            assert.equal(size.row, 2);
+            
+            grid.colAutogrow = true;
+            grid.rowAutogrow = true;
+            size = grid.getClosestPosition(Infinity, Infinity);
+            assert.equal(size.col, Infinity);
+            assert.equal(size.row, Infinity);
+        });
+        
+        test('getCoordinates', function() {
+            let grid = fixture('tile-size');
+            let tile = grid.querySelector('#one');
+            let coordinates = grid.getCoordinates(tile);
+            assert.equal(coordinates.col, 0);
+            assert.equal(coordinates.row, 0);
+            assert.equal(coordinates.width, 1);
+            assert.equal(coordinates.height, 1);
+        });
+        
+        test('_isWithinConstraints', function() {
+            let grid = fixture('tile-size');
+            assert.isTrue(grid._isWithinConstraints(50));
+            assert.isFalse(grid._isWithinConstraints(-50));
+        });
+        
+        test('_isOverlapping', function() {
+            let grid = fixture('tile-size');
+            assert.equal( grid._isOverlapping(0, 0, 1, 1).getAttribute('id'), 'one');
+            assert.isFalse( grid._isOverlapping(100, 0, 100, 100));
+        });
+        
+        test('_safePreventDefault', function() {
+            let grid = fixture('tile-size');
+            assert.doesNotThrow(grid._safePreventDefault.bind(grid, new CustomEvent("my-stuff")));
+        });
+        
+        test('_handleResize', function() {
+            let grid = fixture('tile-size');
+            grid._handleResize({
+                target: grid.querySelector('[resize]'),
+                detail: {
+                    state: 'start',
+                    sourceEvent: {
+                        preventDefault: () => {}
+                    }
+                },
+                preventDefault: () => {},
+                stopPropagation: () => {}
+            });
+            let player = grid.querySelector('#one');
+            assert.equal(grid.placeholder.getAttribute('width'), player.getAttribute('width'));
+            assert.equal(grid.placeholder.getAttribute('height'), player.getAttribute('height'));
+            assert.equal(grid.placeholder.getAttribute('row'), player.getAttribute('row'));
+            assert.equal(grid.placeholder.getAttribute('col'), player.getAttribute('col'));
+            
+            grid._handleResize({
+                target: grid.querySelector('[resize]'),
+                detail: {
+                    state: 'track',
+                    sourceEvent: {
+                        preventDefault: () => {}
+                    },
+                    ddx: parseFloat(player.style.width.split('px')[0]) + 300,
+                    ddy: parseFloat(player.style.top.split('px')[0]) + 300
+                },
+                preventDefault: () => {},
+                stopPropagation: () => {}
+            });
+            
+            assert.equal(grid.placeholder.getAttribute('width'), 10);
+            assert.equal(grid.placeholder.getAttribute('height'), 1);
+            assert.equal(grid.placeholder.getAttribute('row'), 0);
+            assert.equal(grid.placeholder.getAttribute('col'), 0);
+            
+            grid._handleResize({
+                target: grid.querySelector('[resize]'),
+                detail: {
+                    state: 'end',
+                    sourceEvent: {
+                        preventDefault: () => {}
+                    },
+                    ddx: parseFloat(player.style.width.split('px')[0]) + 300,
+                    ddy: parseFloat(player.style.top.split('px')[0]) + 300
+                },
+                preventDefault: () => {},
+                stopPropagation: () => {}
+            });
+            
+            assert.equal(player.getAttribute('width'), 10);
+            assert.equal(player.getAttribute('height'), 1);
+            assert.equal(player.getAttribute('row'), 0);
+            assert.equal(player.getAttribute('col'), 0);
         });
 
         test('applies position styles on tiles properly', function() {

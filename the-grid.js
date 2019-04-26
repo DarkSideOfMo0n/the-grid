@@ -1,10 +1,7 @@
-// import '@polymer/polymer/polymer.js';
 import { GestureEventListeners } from '@polymer/polymer/lib/mixins/gesture-event-listeners.js';
 import { addListener, removeListener } from '@polymer/polymer/lib/utils/gestures.js';
-import { useShadow } from '@polymer/polymer/lib/utils/settings.js';
-import { dom } from '@polymer/polymer/lib/legacy/polymer.dom.js';
 import { afterNextRender } from '@polymer/polymer/lib/utils/render-status.js';
-import { html, PolymerElement } from '@polymer/polymer/polymer-element.js';
+import { isFinite } from 'lodash-es';
 /**
 `<the-grid>` is a grid layout element width drag n drop and resize capabilities.
 
@@ -16,93 +13,10 @@ Example:
 @demo demo/playground.html Playground
 @demo demo/responsive.html Responsiveness
 */
-class TheGrid extends GestureEventListeners(PolymerElement) {
-    static get outerStyle() {
-        return html`
-            <style style="display: none;">
-                the-grid tile {
-                    background: tomato;
-                    opacity: 0.8;
-                    color: white;
-                    cursor: move;
-                    overflow: hidden;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                }
-                
-                the-grid [placeholder] {
-                    background: #afafaf;
-                }
-                
-                the-grid tile > span:not([resize]) {
-                    flex: 1;
-                    text-align: center;
-                    font-size: 2em;
-                }
-                
-                the-grid [resize] {
-                    position: absolute;
-                }
-                
-                the-grid [resize="bottom-right"] {
-                    bottom: 0;
-                    right: 0;
-                    cursor: nwse-resize;
-                }
-                
-                the-grid [resize="bottom-left"] {
-                    bottom: 0;
-                    left: 0;
-                    cursor: nesw-resize;
-                }
-                
-                the-grid [resize="top-right"] {
-                    top: 0;
-                    right: 0;
-                    cursor: nesw-resize;
-                }
-                
-                the-grid [resize="top-left"] {
-                    top: 0;
-                    left: 0;
-                    cursor: nwse-resize;
-                }
-                
-                the-grid [resize="left"] {
-                    top: 50%;
-                    left: 0;
-                    cursor: ew-resize;
-                    margin-top: -10px;
-                }
-                
-                the-grid [resize="top"] {
-                    top: 0%;
-                    width: 100%;
-                    text-align: center;
-                    cursor: ns-resize;
-                }
-                
-                the-grid [resize="right"] {
-                    top: 50%;
-                    right: 0;
-                    cursor: ew-resize;
-                    margin-top: -10px;
-                }
-                
-                the-grid [resize="bottom"] {
-                    bottom: 0;
-                    width: 100%;
-                    text-align: center;
-                    cursor: ns-resize;
-                }
-            </style>
-        `;
-    }
-    
-    static get template() {
-        return html`
-        <style>
+class TheGrid extends GestureEventListeners(HTMLElement) {
+    get innerStyle() {
+        this._innerStyle = this._innerStyle || document.createElement("style");
+        this._innerStyle.innerHTML = `
             :host {
                 display: inline-block;
                 --grid-width: 1090px;  /* cellWidth * colCount + cellMargin * (colCount - 1) */
@@ -139,159 +53,304 @@ class TheGrid extends GestureEventListeners(PolymerElement) {
             
             dom-repeat {
                 display: none;
-            }
-        </style>
-        <div id="container">
-            <slot></slot>
-        </div>
-`;
+            }`;
+
+        return this._innerStyle;
     }
 
-    static get is() { return 'the-grid'; }
+    /**
+     * Defines the height in pixels of the grid unit.
+     * @type {number}
+     * type: Number,
+     * value: 100,
+     * reflectToAttribute: true,
+     * observer: 'computeStyles'
+     */
+    get cellHeight() {
+        return Number.parseInt(this.getAttribute('cell-height'));
+    }
 
-    static get properties() {
-        return {
-            /**
-             * Defines the height in pixels of the grid unit.
-             * @type {number}
-             */
-            cellHeight: {
-                type: Number,
-                value: 100,
-                reflectToAttribute: true,
-                observer: 'computeStyles'
-            },
+    set cellHeight(cellHeight) {
+        if (!isFinite(Number.parseInt(cellHeight))) {
+            throw new TypeError("cell-height not of type number");
+        }
+        this.setAttribute('cell-height', cellHeight);
+    }
 
-            /**
-             * Defines the width in pixels of the grid unit.
-             * @type {number}
-             */
-            cellWidth: {
-                type: Number,
-                value: 100,
-                reflectToAttribute: true,
-                observer: 'computeStyles'
-            },
+    /**
+     * Defines the width in pixels of the grid unit.
+     * @type {number}
+     * type: Number,
+     * value: 100,
+     * reflectToAttribute: true,
+     * observer: 'computeStyles'
+     */
+    get cellWidth() {
+        return Number.parseInt(this.getAttribute('cell-width'));
+    }
 
-            /**
-             * Defines the margin in pixels between grid units.
-             * @type {number}
-             */
-            cellMargin: {
-                type: Number,
-                value: 0,
-                reflectToAttribute: true,
-                observer: 'computeStyles'
-            },
+    set cellWidth(cellWidth) {
+        if (!isFinite(Number.parseInt(cellWidth))) {
+            throw new TypeError("cell-width not of type number");
+        }
+        this.setAttribute('cell-width', cellWidth);
+    }
 
-            minWidth: {
-                type: Number,
-                value: 1,
-                reflectToAttribute: true
-            },
+    /**
+     * Defines the margin in pixels between grid units.
+     * @type {number}
+     * type: Number,
+     * value: 0,
+     * reflectToAttribute: true,
+     * observer: 'computeStyles'
+     */
+    get cellMargin() {
+        return Number.parseInt(this.getAttribute('cell-margin'));
+    }
 
-            maxWidth: {
-                type: Number,
-                value: Infinity,
-                reflectToAttribute: true
-            },
+    set cellMargin(cellMargin) {
+        if (!isFinite(Number.parseInt(cellMargin))) {
+            throw new TypeError("cell-margin not of type number");
+        }
+        this.setAttribute('cell-margin', cellMargin);
+    }
 
-            minHeight: {
-                type: Number,
-                value: 1,
-                reflectToAttribute: true
-            },
+    /**
+     * @type {number}
+     * type: Number,
+     * value: 1,
+     * reflectToAttribute: true,
+     */
+    get minWidth() {
+        return Number.parseInt(this.getAttribute('min-width'));
+    }
 
-            maxHeight: {
-                type: Number,
-                value: Infinity,
-                reflectToAttribute: true
-            },
+    set minWidth(minWidth) {
+        if (!isFinite(Number.parseInt(minWidth))) {
+            throw new TypeError("min-width not of type number");
+        }
+        this.setAttribute('min-width',minWidth);
+    }
 
-            /**
-             * Defines the number of columns of the grid (its width in grid unit).
-             * @type {number}
-             */
-            colCount: {
-                type: Number,
-                value: 10,
-                reflectToAttribute: true,
-                observer: 'computeStyles'
-            },
+    /**
+     * @type {number}
+     * type: Number,
+     * value: 9999,
+     * reflectToAttribute: true,
+     */
+    get maxWidth() {
+        return Number.parseInt(this.getAttribute('max-width'));
+    }
 
-            /**
-             * Defines the number of rows of the grid (its height in grid unit).
-             * @type {number}
-             */
-            rowCount: {
-                type: Number,
-                value: 10,
-                reflectToAttribute: true,
-                observer: 'computeStyles'
-            },
+    set maxWidth(maxWidth) {
+        if (!isFinite(Number.parseInt(maxWidth))) {
+            throw new TypeError("max-width not of type number");
+        }
+        this.setAttribute('max-width', maxWidth);
+    }
 
-            /**
-             * Whether the grid columns count can increase or not (auto expand while dragging).
-             * @type {Boolean}
-             */
-            colAutogrow: {
-                type: Boolean,
-                value: false,
-                reflectToAttribute: true
-            },
+    /**
+     * @type {number}
+     * type: Number,
+     * value: 1,
+     * reflectToAttribute: true,
+     */
+    get minHeight() {
+        return Number.parseInt(this.getAttribute('min-height'));
+    }
 
-            /**
-             * Whether the grid rows count can increase or not (auto expand while dragging).
-             * @type {Boolean}
-             */
-            rowAutogrow: {
-                type: Boolean,
-                value: false,
-                reflectToAttribute: true
-            },
+    set minHeight(minHeight) {
+        if (!isFinite(Number.parseInt(minHeight))) {
+            throw new TypeError("min-height not of type number");
+        }
+        this.setAttribute('min-height', minHeight);
+    }
 
-            /**
-             * Whether the moves and resizes are animated or not.
-             * @type {boolean}
-             */
-            animated: {
-                type: Boolean,
-                value: false,
-                reflectToAttribute: true,
-                observer: 'computeStyles'
-            },
+    /**
+     * @type {number}
+     * type: Number,
+     * value: 9999,
+     * reflectToAttribute: true,
+     */
+    get maxHeight() {
+        return Number.parseInt(this.getAttribute('min-height'));
+    }
 
-            /**
-             * Enable the drag n drop (of the grid's tiles) capability.
-             * @type {boolean}
-             */
-            draggable: {
-                type: Boolean,
-                value: false,
-                reflectToAttribute: true,
-                observer: '_upgradeEvents'
-            },
+    set maxHeight(maxHeight) {
+        if (!isFinite(Number.parseInt(maxHeight))) {
+            throw new TypeError("max-height not of type number");
+        }
+        this.setAttribute('max-height', maxHeight);
+    }
 
-            /**
-             * Enable the resize (of the grid's tiles) capability.
-             * @type {boolean}
-             */
-            resizable: {
-                type: Boolean,
-                value: false,
-                reflectToAttribute: true,
-                observer: '_upgradeEvents'
-            },
+    /**
+     * @type {number}
+     * type: Number,
+     * value: 10,
+     * reflectToAttribute: true,
+     * observer: 'computeStyles'
+     */
+    get colCount() {
+        return Number.parseInt(this.getAttribute('col-count'));
+    }
 
-            /**
-             * Allow tiles to overlap each other.
-             * @type {boolean}
-             */
-            overlappable: {
-                type: Boolean,
-                value: false,
-                reflectToAttribute: true,
-            }
+    set colCount(colCount) {
+        if (!isFinite(Number.parseInt(colCount))) {
+            throw new TypeError("col-count not of type number");
+        }
+        this.setAttribute('col-count', colCount);
+    }
+
+    /**
+     * @type {number}
+     * type: Number,
+     * value: 10,
+     * reflectToAttribute: true,
+     * observer: 'computeStyles'
+     */
+    get rowCount() {
+        return Number.parseInt(this.getAttribute('row-count'));
+    }
+
+    set rowCount(rowCount) {
+        if (!isFinite(Number.parseInt(rowCount))) {
+            throw new TypeError("row-count not of type number");
+        }
+        this.setAttribute('row-count', rowCount);
+    }
+
+    /**
+     * Whether the grid columns count can increase or not (auto expand while dragging).
+     * @type {boolean}
+     * type: boolean,
+     * value: false,
+     * reflectToAttribute: true
+     */
+    get colAutogrow() {
+        return this.hasAttribute('col-autogrow');
+    }
+
+    set colAutogrow(colAutogrow) {
+        if (typeof colAutogrow != "boolean") {
+            throw new TypeError("col-autogrow not of type boolean");
+        }
+        if (Boolean(colAutogrow)) {
+            this.setAttribute('col-autogrow', '');
+        } else {
+            this.removeAttribute('col-autogrow');
+        }
+    }
+
+    /**
+     * Whether the grid rows count can increase or not (auto expand while dragging).
+     * @type {boolean}
+     * type: boolean,
+     * value: false,
+     * reflectToAttribute: true
+     */
+    get rowAutogrow() {
+        return this.hasAttribute('row-autogrow');
+    }
+
+    set rowAutogrow(rowAutogrow) {
+        if (typeof rowAutogrow != "boolean") {
+            throw new TypeError("row-autogrow not of type boolean");
+        }
+        if (Boolean(rowAutogrow)) {
+            this.setAttribute('row-autogrow', '');
+        } else {
+            this.removeAttribute('row-autogrow');
+        }
+    }
+
+    /**
+     * Whether the moves and resizes are animated or not.
+     * @type {boolean}
+     * type: boolean,
+     * value: false,
+     * reflectToAttribute: true
+     * observer: 'computeStyles'
+     */
+    get animated() {
+        return this.hasAttribute('animated');
+    }
+
+    set animated(animated) {
+        if (typeof animated != "boolean") {
+            throw new TypeError("animated not of type boolean");
+        }
+        if (Boolean(animated)) {
+            this.setAttribute('animated', '');
+        } else {
+            this.removeAttribute('animated');
+        }
+    }
+
+    /**
+     * Enable the drag n drop (of the grid's tiles) capability.
+     * @type {boolean}
+     * type: boolean,
+     * value: false,
+     * reflectToAttribute: true
+     * observer: '_upgradeEvents'
+     */
+    get draggable() {
+        return this.hasAttribute('draggable');
+    }
+
+    set draggable(draggable) {
+        if (typeof draggable != "boolean") {
+            throw new TypeError("draggable not of type boolean");
+        }
+        if (Boolean(draggable)) {
+            this.setAttribute('draggable', '');
+        } else {
+            this.removeAttribute('draggable');
+        }
+    }
+
+    /**
+     * Enable the drag n drop (of the grid's tiles) capability.
+     * @type {boolean}
+     * type: boolean,
+     * value: false,
+     * reflectToAttribute: true
+     * observer: '_upgradeEvents'
+     */
+    get resizable() {
+        return this.hasAttribute('resizable');
+    }
+
+    set resizable(resizable) {
+        if (typeof resizable != "boolean") {
+            throw new TypeError("resizable not of type boolean");
+        }
+        if (Boolean(resizable)) {
+            this.setAttribute('resizable', '');
+        } else {
+            this.removeAttribute('resizable');
+        }
+    }
+
+    /**
+     * Allow tiles to overlap each other.
+     * @type {boolean}
+     * type: boolean,
+     * value: false,
+     * reflectToAttribute: true
+     */
+    get overlappable() {
+        return this.hasAttribute('overlappable');
+    }
+
+    set overlappable(overlappable) {
+        if (typeof overlappable != "boolean") {
+            throw new TypeError("overlappable not of type boolean");
+        }
+        if (Boolean(overlappable)) {
+            this.setAttribute('overlappable', '');
+        } else {
+            this.removeAttribute('overlappable');
         }
     }
 
@@ -300,7 +359,26 @@ class TheGrid extends GestureEventListeners(PolymerElement) {
      */
     constructor() {
         super();
-        afterNextRender(this, function() {
+        this.attachShadow({ mode: 'open' });
+
+        this.cellHeight = this.cellHeight || 100;
+        this.cellWidth = this.cellWidth || 100;
+        this.cellMargin = this.cellMargin || 0;
+        this.minWidth = this.minWidth || 1;
+        this.maxWidth = this.maxWidth || 9999;
+        this.minHeight = this.minHeight || 1;
+        this.maxHeight = this.maxHeight || 9999;
+        this.colCount = this.colCount || 10;
+        this.rowCount = this.rowCount || 10;
+        this.colAutogrow = this.colAutogrow;
+        this.rowAutogrow = this.rowAutogrow;
+        this.animated = this.animated;
+        this.draggable = this.draggable;
+        this.resizable = this.resizable;
+        this.overlappable = this.overlappable;
+
+
+        afterNextRender(this, function () {
             // Create the mutation observer instance.
             const observer = new MutationObserver(mutations =>
                 mutations.forEach(mutation => this._upgradeEvents(mutation)));
@@ -310,14 +388,43 @@ class TheGrid extends GestureEventListeners(PolymerElement) {
 
             // The observed target is the grid element itself.
             observer.observe(this, config);
-          });
+        });
     }
 
     connectedCallback() {
-        super.connectedCallback();
+        //make tamplate
+        let container = document.createElement('div');
+        container.setAttribute("id", "container");
+        container.appendChild(document.createElement("slot"));
+        this.shadowRoot.appendChild(container);
+
+        //append styles
+        this.shadowRoot.appendChild(this.innerStyle);
+
         this.computeStyles();
-        //Add Css for Resizers outside of shadow Dom
-        this.appendChild(TheGrid.outerStyle.content);
+    }
+
+    static get observedAttributes() {
+        return ['cell-height', 'cell-width', 'cell-margin', 'col-count', 'row-count', "animated", 'draggable', 'resizable'];
+    }
+
+    attributeChangedCallback(name) {
+        switch (name) {
+            case 'cell-height':
+            case 'cell-width':
+            case 'cell-margin':
+            case 'col-count':
+            case 'row-count':
+                if(isFinite(Number.parseInt(this.getAttribute(name)))) true;
+                else throw new TypeError(`${name} not of type number`);
+            case 'animated':
+                this.computeStyles();
+                break;
+            case 'draggable':
+            case 'resizable':
+                this._upgradeEvents();
+                break;
+        }
     }
 
     /**
@@ -407,12 +514,10 @@ class TheGrid extends GestureEventListeners(PolymerElement) {
      */
     computeStyles() {
 
-        const idSelector = this.id ? `#${this.id}` : '';
-        const selfSelector = `the-grid${idSelector}`;
-        const startSelector = useShadow ? '#container > ::slotted(' : `${selfSelector} `;
-        const endSelector = useShadow ? ')' : '';
-        const customStyle = this._customStyle || document.createElement('custom-style');
-        const style = customStyle && customStyle.querySelector('style') || document.createElement('style');
+        const startSelector = '#container > ::slotted(';
+        const endSelector = ')';
+        //const customStyle = this._customStyle || document.createElement('style');
+        //const style = this.style || document.createElement('style');
 
         let margin = this.cellMargin,
             height = this.cellHeight,
@@ -457,16 +562,23 @@ class TheGrid extends GestureEventListeners(PolymerElement) {
               ${startSelector}[height="${i + 1}"]${endSelector} { height:  var(--grid-height-${(i + 1)}); }
           `;
         }
+        //this.shadowRoot.appendChild(this.innerStyle);
+        styleRules += `
+        :host{
+            `;
+        for (let key in styleVars) {
+            styleRules += `${key}:${styleVars[key]};\n`;
+        }
+        styleRules += `}`;
+        this.innerStyle.innerHTML += styleRules;
 
-        style.textContent = styleRules;
-
-        this._customStyle = customStyle;
+        //this._customStyle = customStyle;
 
         // Light Dom customization using external stylesheet.
-        customStyle.appendChild(style);
-        this.root.appendChild(customStyle);
+        //customStyle.appendChild(style);
+        //this.shadowRoot.appendChild(customStyle);
         // Local DOM (Shadow or Shady) customization using inner stylesheet.
-        this.updateStyles(styleVars);
+        //this.updateStyles(styleVars);
     }
 
     /**
@@ -492,7 +604,8 @@ class TheGrid extends GestureEventListeners(PolymerElement) {
             state = e.detail.state;
 
         // Only handle direct children of the grid.
-        if (dom(player).parentNode !== this) return;
+        //player.parentNode was dom(player).parentNode
+        if (player.parentNode !== this) return;
 
         // Create a placeholder if not present.
         if (!this.placeholder) {
@@ -564,7 +677,7 @@ class TheGrid extends GestureEventListeners(PolymerElement) {
         e.stopPropagation();
 
     }
-
+    
     /**
      * Process events related to a player being resized.
      * @private
@@ -680,7 +793,6 @@ class TheGrid extends GestureEventListeners(PolymerElement) {
         this._safePreventDefault(e.detail.sourceEvent);
         e.preventDefault();
         e.stopPropagation();
-
     }
 
     /**
@@ -849,4 +961,4 @@ class TheGrid extends GestureEventListeners(PolymerElement) {
     }
 }
 
-customElements.define(TheGrid.is, TheGrid);
+customElements.define("the-grid", TheGrid);

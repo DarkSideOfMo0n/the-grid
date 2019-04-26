@@ -9,24 +9,101 @@
     <title>the-grid demos</title>
 
     <script src="../../../@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
-    
+
 
     <script type="module" src="../../../@polymer/iron-demo-helpers/demo-pages-shared-styles.js"></script>
     <script type="module" src="../../../@polymer/iron-demo-helpers/demo-snippet.js"></script>
     <script type="module" src="../the-grid.js"></script>
     <script type="module" src="../debug-grid.js"></script>
 
-    <custom-style>
-        <style is="custom-style" include="demo-pages-shared-styles"></style>
-    </custom-style>
-
     <style>
+        body {
+            margin: 0;
+        }
+
         the-grid {
             border: 1px solid #ddd;
         }
 
         debug-grid {
             left: 44px;
+        }
+
+        tile {
+            background: tomato;
+            opacity: 0.8;
+            color: white;
+            cursor: move;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        [placeholder] {
+            background: #afafaf;
+        }
+
+        tile>span:not([resize]) {
+            flex: 1;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        [resize] {
+            position: absolute;
+        }
+
+        [resize="bottom-right"] {
+            bottom: 0;
+            right: 0;
+            cursor: nwse-resize;
+        }
+
+        [resize="bottom-left"] {
+            bottom: 0;
+            left: 0;
+            cursor: nesw-resize;
+        }
+
+        [resize="top-right"] {
+            top: 0;
+            right: 0;
+            cursor: nesw-resize;
+        }
+
+        [resize="top-left"] {
+            top: 0;
+            left: 0;
+            cursor: nwse-resize;
+        }
+
+        [resize="left"] {
+            top: 50%;
+            left: 0;
+            cursor: ew-resize;
+            margin-top: -10px;
+        }
+
+        [resize="top"] {
+            top: 0%;
+            width: 100%;
+            text-align: center;
+            cursor: ns-resize;
+        }
+
+        [resize="right"] {
+            top: 50%;
+            right: 0;
+            cursor: ew-resize;
+            margin-top: -10px;
+        }
+
+        [resize="bottom"] {
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            cursor: ns-resize;
         }
     </style>
 </head>

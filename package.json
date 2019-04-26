@@ -14,7 +14,8 @@
   "main": "the-grid.js",
   "author": "Florian Maffini <florian.maffini@free.fr>",
   "dependencies": {
-    "@polymer/polymer": "^3.0.5"
+    "@polymer/polymer": "^3.0.5",
+    "lodash-es": "^4.17.11"
   },
   "devDependencies": {
     "@polymer/iron-component-page": "^4.0.1",

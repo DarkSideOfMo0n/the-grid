@@ -11,60 +11,66 @@
     <script src="../../../@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
 
     <script type="module" src="../the-grid.js"></script>
-    <script type="module" src="./grid-styles.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
 
-    <custom-style>
-        <style is="custom-style" include="grid-styles">
-            body {
-                margin: 0;
-            }
+        the-grid tile>span:not([resize]) {
+            font-size: 4vw;
+        }
 
-            the-grid tile>span:not([resize]) {
-                font-size: 4vw;
-            }
-        </style>
-    </custom-style>
+        the-grid {
+            border: 1px solid #ddd;
+        }
+
+        tile {
+            background: tomato;
+            opacity: 0.8;
+            color: white;
+            cursor: move;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+
+
 </head>
 
 <body>
-    <dom-bind>
-        <template>
-            <!-- Here is a grid which always fit the window size -->
-            <the-grid draggable overlappable cell-height="{{cellHeight}}" cell-width="{{cellWidth}}" col-count="{{colCount}}"
-                row-count="{{rowCount}}" cell-margin="{{cellMargin}}">
-                <tile col="0" row="0" height="8" width="1">
-                    <span>Left</span>
-                </tile>
-                <tile col="1" row="0" height="5" width="1">
-                    <span>Center</span>
-                </tile>
-                <tile col="2" row="0" height="5" width="1">
-                    <span>Center</span>
-                </tile>
-                <tile col="3" row="0" height="7" width="1">
-                    <span>Right</span>
-                </tile>
-            </the-grid>
-        </template>
-    </dom-bind>
+    <the-grid draggable overlappable col-count="4" row-count="8" cell-margin="10">
+        <tile col="0" row="0" height="8" width="1">
+            <span>Left</span>
+        </tile>
+        <tile col="1" row="0" height="5" width="1">
+            <span>Center</span>
+        </tile>
+        <tile col="2" row="0" height="5" width="1">
+            <span>Center</span>
+        </tile>
+        <tile col="3" row="0" height="7" width="1">
+            <span>Right</span>
+        </tile>
+    </the-grid>
 
     <script>
-        let autobind = document.querySelector('dom-bind');
+        (function () {
+            // However the cell height and width will be updated so the entire grid fit the window.
+            function update() {
+                var grid = document.querySelector('the-grid');
+                grid.setAttribute("cell-height", (window.innerHeight - grid.cellMargin * (grid.rowCount - 1)) / grid.rowCount);
+                grid.setAttribute("cell-width", (window.innerWidth - grid.cellMargin * (grid.colCount - 1)) / grid.colCount);
+                console.log("asdsaddsaasddsa")
+            }
 
-        // The grid will always keeps its margin, columns and rows counts unchanged.
-        autobind.cellMargin = 10;
-        autobind.colCount = 4;
-        autobind.rowCount = 8;
+            window.addEventListener('resize', update);
 
-        // However the cell height and width will be updated so the entire grid fit the window.
-        function update() {
-            autobind.cellHeight = (window.innerHeight - autobind.cellMargin * (autobind.rowCount - 1)) / autobind.rowCount;
-            autobind.cellWidth = (window.innerWidth - autobind.cellMargin * (autobind.colCount - 1)) / autobind.colCount;
-        }
-
-        window.addEventListener('resize', update);
-
-        update();
+            update();
+        })();
     </script>
 
 </body>
