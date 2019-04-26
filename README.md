@@ -1,6 +1,6 @@
 # \<the-grid\>
 
-[![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/vpusher/the-grid)
+[![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/DarkSideOfMo0n/the-grid)
 
 > A digital frontier...
 
@@ -257,6 +257,7 @@ Resize grippers can take the following values:
 
 ## History
 
+* **1.5.0:** Is now npm based and a Polymer 3 web component.
 * **1.4.0:** Now handles children added on the fly + Serialization helper.
 * **1.3.0:** Ability to add constraints on tile size as min/max width and height.
 * **1.2.0:** Introduce autogrow feature and custom events.
@@ -269,3 +270,7 @@ Resize grippers can take the following values:
 ## License
 
 MIT license
+
+## Contributors
+
+Very big thanks to [v-pusher](https://github.com/vpusher) this repository is a fork of [the-grid](https://github.com/vpusher/the-grid)
